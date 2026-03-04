@@ -1,102 +1,105 @@
-## Digital Elevation Model (DEM) from a Grayscale Moon Image
+## Lunar Digital Elevation Model (DEM) Reconstruction
+
+Tech Stack: PyTorch, NumPy, SciPy, Matplotlib
+
+----
+
 ## Overview
 
-This project reconstructs a Digital Elevation Model (DEM) from a single grayscale image of the Moon using classical computer vision and numerical methods.
+This project implements a Shape-from-Shading pipeline to reconstruct a Lunar Digital Elevation Model (DEM) from a single grayscale Moon image under Lambertian reflectance assumptions.
 
-Pixel brightness is not treated as height. Instead, brightness variations are interpreted as surface orientation, from which surface slopes are estimated and then globally integrated to recover terrain height.
+The goal is to recover surface height from image intensity gradients and evaluate the mathematical consistency of the reconstructed surface.
 
-The final output is a relative elevation map highlighting craters, slopes, and flat regions.
+----
 
----
+## Methodology
 
-## Method Summary
+1. Image Preprocessing
 
-Gaussian Smoothing
-Reduces noise, compression artifacts, and unstable brightness variations.
+Applied Gaussian smoothing to reduce noise.
+Computed image gradients using Sobel filters.
 
-Image Gradients (Sobel Operator)
-Estimates brightness changes along x and y directions, which relate to surface tilt.
+2️. Surface Slope Estimation
 
-Surface Normals
-Gradients are converted into 3D surface normals representing local surface orientation.
+Under Lambertian assumptions, image gradients approximate surface slopes:
+p=∂z/∂x
+q=∂z/∂y
+Additional smoothing is applied to stabilize the slope field.
 
-Surface Slopes
-Normals are transformed into slope fields (∂z/∂x, ∂z/∂y).
+3️. Integrability Analysis
 
-Divergence of Slopes
-Captures global inconsistency in slope estimates.
+For a physically valid surface:
+∂x∂q=∂y∂p
+The curl of the slope field is computed:
+curl=∂𝑞∂𝑥−∂𝑝∂𝑦
+curl=∂x∂q​−∂y∂p​
+Mean absolute curl is used as an integrability error metric.
 
-Poisson Surface Integration
-Solves for the height surface whose gradients best match the estimated slopes, using an FFT-based solution.
+4️. Height Reconstruction via Poisson Integration
 
----
+The surface height z
+z is recovered by solving:
+∇2z=∇⋅(p,q)
+Using an FFT-based Poisson solver in the frequency domain.
+This performs global least-squares integration of the slope field.
 
-## Key Idea
+5️. Baseline Comparison
 
-The height surface 𝑧(𝑥,𝑦)
-z(x,y) is recovered by solving a Poisson equation, which provides a globally consistent integration of local slope measurements.
+Naive cumulative integration is implemented as a baseline:
+height_direct = np.cumsum(p, axis=1) + np.cumsum(q, axis=0)
+This method accumulates rotational inconsistencies and introduces streak artifacts.
 
-This avoids error accumulation that occurs with direct path-wise integration.
+----
 
----
+## Results
+
+Metric	Direct Integration	Poisson Integration
+Integrability Error	High	Reduced by ~81%
+Gradient Energy	High	Reduced by ~55%
+
+----
+
+## Key Observations:
+
+Poisson reconstruction significantly reduces rotational inconsistencies.
+High-frequency gradient energy is suppressed.
+The reconstructed surface exhibits improved global coherence and numerical stability.
+Direct integration introduces visible streak artifacts due to non-integrable slope accumulation.
+
+----
 
 ## Output
 
-A normalized Digital Elevation Model (DEM)
+The reconstructed Digital Elevation Model (DEM) is visualized using a colormap and normalized for interpretability.
 
-Relative height representation (not absolute elevation)
+----
 
-Terrain features such as craters and ridges are clearly visible
+## Key Concepts
 
-Assumptions
+Shape-from-Shading
+Integrability of gradient fields
+Curl diagnostics
+Poisson equation
+FFT-based PDE solvers
+Frequency-domain reconstruction
+High-frequency noise suppression
 
-Lambertian surface reflectance
+----
 
-Single distant light source
+## Future Improvements
 
-Orthographic projection
+Explicit Helmholtz decomposition of slope field
+Robust illumination modeling
+Multi-image photometric stereo
+Comparison against ground-truth DEM datasets
 
-Relative height reconstruction
+----
 
----
+## License
 
-## Limitations
+This project is for educational purposes.
 
-Absolute height scale cannot be recovered
-
-Sensitive to illumination direction
-
-Boundary effects due to FFT-based solution
-
----
-
-## Tools & Libraries
-
-Python
-
-NumPy
-
-SciPy
-
-Matplotlib
-
-Applications
-
-Shape-from-shading
-
-Planetary surface analysis
-
-Computer vision and graphics
-
-Remote sensing fundamentals
-
----
-
-## Result
-
-The project demonstrates how local brightness changes can be converted into global terrain structure using principled mathematical modeling.
-
----
+----
 
 ## Author
 
