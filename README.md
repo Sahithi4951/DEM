@@ -72,6 +72,10 @@ Direct integration introduces visible streak artifacts due to non-integrable slo
 
 The reconstructed Digital Elevation Model (DEM) is visualized using a colormap and normalized for interpretability.
 
+Below is the reconstructed Lunar Digital Elevation Model generated using Poisson integration.
+
+![Lunar DEM](DEM.png)
+
 ----
 
 ## Key Concepts
